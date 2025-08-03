@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   backend:
-    image: ghcr.io/canove/whaticket:latest
+    image: devsuporte/whaticket-backend:latest
     restart: always
     environment:
       - DB_HOST=mysql
@@ -29,7 +29,7 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=3000"
 
   frontend:
-    image: ghcr.io/canove/whaticket-frontend:latest
+    image: devsuporte/whaticket-frontend:latest
     restart: always
     environment:
       - URL_BACKEND=backend:3000
