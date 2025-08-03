@@ -2,9 +2,7 @@ version: '3.7'
 
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: ./Dockerfile
+    image: ghcr.io/canove/whaticket:latest
     restart: always
     environment:
       - DB_HOST=mysql
@@ -31,16 +29,11 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=3000"
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: ./Dockerfile
+    image: ghcr.io/canove/whaticket-frontend:latest
     restart: always
     environment:
       - URL_BACKEND=backend:3000
       - REACT_APP_BACKEND_URL=https://api.ceq.bizzudigital.com.br
-    volumes:
-      - ./ssl/certs/:/etc/nginx/ssl/
-      - ./ssl/www/:/var/www/letsencrypt/
     networks:
       - web
       - whaticket
