@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    restart: always
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASS=strongpassword
+      - DB_NAME=whaticket
+      - JWT_SECRET=superjwtsecret
+      - JWT_REFRESH_SECRET=superjwtrefresh
+      - BACKEND_URL=https://api.ceq.bizzudigital.com.br
+      - FRONTEND_URL=https://ceq.bizzudigital.com.br
+      - PROXY_PORT=8080
+      - CHROME_ARGS=--no-sandbox --disable-setuid-sandbox
+    volumes:
+      - ./backend/public:/usr/src/app/public/
+      - ./backend/.wwebjs_auth:/usr/src/app/.wwebjs_auth/
+    networks:
+      - web
+      - whaticket
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.ceq.bizzudigital.com.br`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    restart: always
+    environment:
+      - URL_BACKEND=backend:3000
+      - REACT_APP_BACKEND_URL=https://api.ceq.bizzudigital.com.br
+    volumes:
+      - ./ssl/certs/:/etc/nginx/ssl/
+      - ./ssl/www/:/var/www/letsencrypt/
+    networks:
+      - web
+      - whaticket
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`ceq.bizzudigital.com.br`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+  mysql:
+    image: mariadb:10.6
+    restart: always
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    volumes:
+      - ./.docker/data:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=whaticket
+      - MYSQL_ROOT_PASSWORD=strongpassword
+      - TZ=America/Fortaleza
+    networks:
+      - whaticket
+
+networks:
+  whaticket:
+  web:
+    external: true
